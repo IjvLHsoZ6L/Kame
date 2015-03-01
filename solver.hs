@@ -1,6 +1,6 @@
 import Control.Applicative ((<$>))
 import Data.Array.Unboxed (UArray, array, range, bounds, indices, (!), (//))
-import Data.Set (Set, empty, singleton, notMember, insert)
+import Data.Set (empty, singleton, notMember, insert)
 
 main :: IO ()
 main = do
@@ -48,17 +48,15 @@ isCompleted b = and [ b ! c /= 'x' | c <- indices b ]
 
 transforms :: Board -> [(Board, Track)]
 transforms b0 = aux emptyQ (singletonQ (b0, [])) empty (singleton b0) where
-    aux :: Queue (Board, Coord, Route, Track) -> Queue (Board, Track)
-            -> Set (Board, Coord) -> Set Board -> [(Board, Track)]
     aux bcrts bts bcset bset
         | nullQ bcrts && nullQ bts
             = []
         | nullQ bcrts
-            = aux (concatMapQ catch bts) emptyQ bcset bset
+            = aux (concatMapQ catches bts) emptyQ bcset bset
         | b `notMember` bset
             = (b, t') : aux bcrts (bts `enQ` (b, t')) bcset (insert b bset)
         | (b, c) `notMember` bcset
-            = aux (bcrts' `appendQ` [ (move b c c', c', c : r, t) | c' <- canMove b c ])
+            = aux (bcrts' `appendQ` moves (b, c, r, t))
                 bts (insert (b, c) bcset) bset
         | otherwise
             = aux bcrts' bts bcset bset
@@ -66,9 +64,8 @@ transforms b0 = aux emptyQ (singletonQ (b0, [])) empty (singleton b0) where
             (b, c, r, t) = headQ bcrts
             bcrts' = tailQ bcrts
             t' = (c : r) : t
-
-catch :: (Board, Track) -> [(Board, Coord, Route, Track)]
-catch (b, t) = [ (b, c, [], t) | c <- canCatch b ]
+    catches (b, t) = [ (b, c, [], t) | c <- canCatch b ]
+    moves (b, c, r, t) = [ (move b c c', c', c : r, t) | c' <- canMove b c ]
 
 canCatch :: Board -> [Coord]
 canCatch b = [ c | c <- indices b , exists b c ]
