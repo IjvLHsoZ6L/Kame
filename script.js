@@ -48,23 +48,18 @@
     update();
 
     document.getElementById('start').onclick = function() {
+      if (config) {
+        for (var i = 0; i < size; i++)
+          for (var j = 0; j < size; j++)
+            saved[i][j] = state[i][j];
+      }
       config = false;
-      count = 0;
-      holding = false;
       load();
     };
 
     document.getElementById('config').onclick = function() {
       config = true;
-      count = 0;
-      holding = false;
       load();
-    };
-
-    document.getElementById('save').onclick = function() {
-      for (var i = 0; i < size; i++)
-        for (var j = 0; j < size; j++)
-          saved[i][j] = state[i][j];
     };
   })();
 
@@ -171,6 +166,8 @@
   }
 
   function load() {
+    count = 0;
+    holding = false;
     for (var i = 0; i < size; i++)
       for (var j = 0; j < size; j++)
         state[i][j] = saved[i][j];
