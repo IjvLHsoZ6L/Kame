@@ -6,8 +6,8 @@ main :: IO ()
 main = do
     b0 <- toBoard <$> readFile "problem.txt"
     printBoard b0
-    -- printBoardTrack $ head $ filter (isCompleted . fst) $ transforms b0
-    mapM_ printIntBoardTrack $ zip [1 .. ] $ transforms b0
+    -- printBoardTrack $ head $ filter (isCompleted . fst) $ transform b0
+    mapM_ printIntBoardTrack $ zip [1 .. ] $ transform b0
 
 type Board = UArray Coord State
 
@@ -46,26 +46,23 @@ printIntBoardTrack (i, bt) = do
 isCompleted :: Board -> Bool
 isCompleted b = and [ b ! c /= 'x' | c <- indices b ]
 
-transforms :: Board -> [(Board, Track)]
-transforms b0 = aux emptyQ (singletonQ (b0, [])) empty (singleton b0) where
-    aux bcrts bts bcset bset
-        | nullQ bcrts && nullQ bts
-            = []
-        | nullQ bcrts
-            = aux (concatMapQ catches bts) emptyQ bcset bset
+transform :: Board -> [(Board, Track)]
+transform b0 = aux [] [] [(b0, [])] empty (singleton b0) where
+    aux [] [] [] _ _
+        = []
+    aux [] [] bts bcset bset
+        = aux [ (b, p, [], t) | (b, t) <- bts , p <- canCatch b ] [] bts bcset bset
+    aux [] bcrtss bts bcset bset
+        = aux (concat $ reverse bcrtss) [] bts bcset bset
+    aux bcrts @ ((b, c, r, t) : bcrts') bcrtss bts bcset bset
         | b `notMember` bset
-            = (b, t') : aux bcrts (bts `enQ` (b, t')) bcset (insert b bset)
+            = (b, t') : aux bcrts bcrtss ((b, t') : bts) bcset (insert b bset)
         | (b, c) `notMember` bcset
-            = aux (bcrts' `appendQ` moves (b, c, r, t))
+            = aux bcrts' ([ (move b c c', c', c : r, t) | c' <- canMove b c ] : bcrtss)
                 bts (insert (b, c) bcset) bset
         | otherwise
-            = aux bcrts' bts bcset bset
-        where
-            (b, c, r, t) = headQ bcrts
-            bcrts' = tailQ bcrts
-            t' = (c : r) : t
-    catches (b, t) = [ (b, c, [], t) | c <- canCatch b ]
-    moves (b, c, r, t) = [ (move b c c', c', c : r, t) | c' <- canMove b c ]
+            = aux bcrts' bcrtss bts bcset bset
+        where t' = (c : r) : t
 
 canCatch :: Board -> [Coord]
 canCatch b = [ c | c <- indices b , exists b c ]
@@ -110,39 +107,3 @@ segment (i, j) (i', j')
     where
         i''s = [min i i' + 1 .. max i i' - 1]
         j''s = [min j j' + 1 .. max j j' - 1]
-
-type Queue a = ([a], [[a]])
-
-toQ :: [a] -> Queue a
-toQ xs = (xs, [])
-
-fromQ :: Queue a -> [a]
-fromQ (xs, xss) = xs ++ concat (reverse xss)
-
-emptyQ :: Queue a
-emptyQ = toQ []
-
-singletonQ :: a -> Queue a
-singletonQ x = toQ [x]
-
-nullQ :: Queue a -> Bool
-nullQ (xs, _) = null xs
-
-headQ :: Queue a -> a
-headQ (xs, _) = head xs
-
-tailQ :: Queue a -> Queue a
-tailQ (xs, ys) = validQ (tail xs, ys)
-
-validQ :: Queue a -> Queue a
-validQ ([], xss) = (concat (reverse xss), [])
-validQ q         = q
-
-enQ :: Queue a -> a -> Queue a
-q `enQ` x = q `appendQ` [x]
-
-appendQ :: Queue a -> [a] -> Queue a
-(xs, xss) `appendQ` ys = validQ (xs, ys : xss)
-
-concatMapQ :: (a -> [b]) -> Queue a -> Queue b
-concatMapQ f = toQ . concatMap f . fromQ
