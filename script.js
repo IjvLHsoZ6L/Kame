@@ -18,20 +18,15 @@
   var saved = [[0, 0, 0, 0], [2, 2, 2, 2], [2, 2, 2, 2], [0, 2, 2, 0]];
 
   (function initialize() {
-    config = false;
-    count = 0;
-    holding = false;
-    state = [];
+
     table = [];
     image = [];
     var tbody = document.getElementById('tbody');
     for (var i = 0; i < size; i++) {
-      state[i] = [];
       table[i] = [];
       image[i] = [];
       var tr = document.createElement('tr');
       for (var j = 0; j < size; j++) {
-        state[i][j] = saved[i][j];
         table[i][j] = document.createElement('td');
         image[i][j] = document.createElement('img');
         image[i][j].style.width = (0.9 * scale) + 'px';
@@ -45,6 +40,11 @@
       tbody.appendChild(tr);
     }
 
+    state = [];
+    for (var i = 0; i < size; i++)
+      state[i] = [];
+    config = false;
+    load();
     update();
 
     document.getElementById('start').onclick = function() {
@@ -63,25 +63,18 @@
     };
   })();
 
-  function onclick(i, j) {
-    return function() {
-      if (config) {
-        state[i][j] = (state[i][j] + 1) % 3;
-        update();
-      }
-      else {
-        if (selected(i, j))
-          release();
-        else if (can_move(i, j))
-          move(i, j);
-        else if (can_hold(i, j))
-          hold(i, j);
-      }
-    };
+  function load() {
+    count = 0;
+    holding = false;
+    for (var i = 0; i < size; i++)
+      for (var j = 0; j < size; j++)
+        state[i][j] = saved[i][j];
+    update();
   }
 
   function update() {
     document.getElementById('count').value = count;
+    var isCompleted = true;
     for (var i = 0; i < size; i++) {
       for (var j = 0; j < size; j++) {
         if (state[i][j] === blank)
@@ -98,8 +91,29 @@
           table[i][j].style.background = blue;
         else
           table[i][j].style.background = green;
+        if (state[i][j] === reverse)
+            isCompleted = false
       }
     }
+    if (!config && !holding && isCompleted)
+      setTimeout(function() { alert('Clear! [count: ' + count + ']'); }, 0);
+  }
+
+  function onclick(i, j) {
+    return function() {
+      if (config) {
+        state[i][j] = (state[i][j] + 1) % 3;
+        update();
+      }
+      else {
+        if (selected(i, j))
+          release();
+        else if (can_move(i, j))
+          move(i, j);
+        else if (can_hold(i, j))
+          hold(i, j);
+      }
+    };
   }
 
   function selected(i, j) {
@@ -162,15 +176,6 @@
   function release() {
     holding = false;
     count++;
-    update();
-  }
-
-  function load() {
-    count = 0;
-    holding = false;
-    for (var i = 0; i < size; i++)
-      for (var j = 0; j < size; j++)
-        state[i][j] = saved[i][j];
     update();
   }
 })();
