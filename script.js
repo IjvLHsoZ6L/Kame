@@ -92,7 +92,7 @@
         else
           table[i][j].style.background = green;
         if (state[i][j] === reverse)
-            isCompleted = false
+            isCompleted = false;
       }
     }
     if (!config && !holding && isCompleted)
@@ -129,8 +129,8 @@
       return false;
     if (!(i === I || j === J || Math.abs(i - I) === Math.abs(j - J)))
       return false;
-    var di = Math.sign(i - I);
-    var dj = Math.sign(j - J);
+    var di = i > I ? +1 : i < I ? -1 : 0;
+    var dj = j > J ? +1 : j < J ? -1 : 0;
     var ii = I;
     var jj = J;
     while (true) {
@@ -155,8 +155,8 @@
   }
 
   function move(i, j) {
-    var di = Math.sign(i - I);
-    var dj = Math.sign(j - J);
+    var di = i > I ? +1 : i < I ? -1 : 0;
+    var dj = j > J ? +1 : j < J ? -1 : 0;
     var ii = I;
     var jj = J;
     while (true) {
