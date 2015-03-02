@@ -33,7 +33,7 @@
         table[i][j].appendChild(image[i][j]);
         table[i][j].style.width = scale + 'px';
         table[i][j].style.height = scale + 'px';
-        table[i][j].style.textAlign = 'center';
+        table[i][j].align = 'center';
         table[i][j].onclick = onclick(i, j);
         tr.appendChild(table[i][j]);
       }
@@ -96,7 +96,7 @@
       }
     }
     if (!config && !holding && isCompleted)
-      setTimeout(function() { alert('Clear! [count: ' + count + ']'); }, 0);
+      setTimeout(function() { alert('Clear! [count: ' + count + ']'); }, 1);
   }
 
   function onclick(i, j) {
