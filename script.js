@@ -96,7 +96,7 @@
       }
     }
     if (!config && !holding && isCompleted)
-      setTimeout(function() { alert('Clear! [count: ' + count + ']'); }, 1);
+      setTimeout(function() { alert('Clear! [count: ' + count + ']'); }, 100);
   }
 
   function onclick(i, j) {
