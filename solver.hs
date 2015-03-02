@@ -51,14 +51,14 @@ transform b0 = aux [] [] [(b0, [])] empty (singleton b0) where
     aux [] [] [] _ _
         = []
     aux [] [] bts bcset bset
-        = aux [ (b, p, [], t) | (b, t) <- bts , p <- canCatch b ] [] [] bcset bset
+        = aux [ (b, p, [], t) | (b, t) <- reverse bts , p <- canCatch b ] [] [] bcset bset
     aux [] bcrtsNext bts bcset bset
-        = aux bcrtsNext [] bts bcset bset
+        = aux (concat $ reverse bcrtsNext) [] bts bcset bset
     aux bcrts @ ((b, c, r, t) : bcrts') bcrtsNext bts bcset bset
         | b `notMember` bset
             = (b, t') : aux bcrts bcrtsNext ((b, t') : bts) bcset (insert b bset)
         | (b, c) `notMember` bcset
-            = aux bcrts' ([ (move b c c', c', c : r, t) | c' <- canMove b c ] ++ bcrtsNext)
+            = aux bcrts' ([ (move b c c', c', c : r, t) | c' <- canMove b c ] : bcrtsNext)
                 bts (insert (b, c) bcset) bset
         | otherwise
             = aux bcrts' bcrtsNext bts bcset bset
