@@ -34,8 +34,8 @@
         table[i][j].style.width = scale + 'px';
         table[i][j].style.height = scale + 'px';
         table[i][j].style.textAlign = 'center';
-        table[i][j].style.cursor = 'pointer';
         table[i][j].onclick = onclick(i, j);
+        table[i][j].ontouchstart = onclick(i, j);
         tr.appendChild(table[i][j]);
       }
       tbody.appendChild(tr);
