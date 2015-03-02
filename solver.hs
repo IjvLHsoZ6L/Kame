@@ -6,8 +6,8 @@ main :: IO ()
 main = do
     b0 <- toBoard <$> readFile "problem.txt"
     printBoard b0
-    -- printBoardTrack $ head $ filter (isCompleted . fst) $ transform b0
-    mapM_ printIntBoardTrack $ zip [1 .. ] $ transform b0
+    printBoardTrack $ head $ filter (isCompleted . fst) $ transform b0
+    -- mapM_ printIntBoardTrack $ zip [1 .. ] $ transform b0
 
 type Board = UArray Coord State
 
@@ -51,31 +51,32 @@ transform b0 = aux [] [] [(b0, [])] empty (singleton b0) where
     aux [] [] [] _ _
         = []
     aux [] [] bts bcset bset
-        = aux [ (b, p, [], t) | (b, t) <- bts , p <- canCatch b ] [] bts bcset bset
-    aux [] bcrtss bts bcset bset
-        = aux (concat $ reverse bcrtss) [] bts bcset bset
-    aux bcrts @ ((b, c, r, t) : bcrts') bcrtss bts bcset bset
+        = aux [ (b, p, [], t) | (b, t) <- bts , p <- canCatch b ] [] [] bcset bset
+    aux [] bcrtsNext bts bcset bset
+        = aux bcrtsNext [] bts bcset bset
+    aux bcrts @ ((b, c, r, t) : bcrts') bcrtsNext bts bcset bset
         | b `notMember` bset
-            = (b, t') : aux bcrts bcrtss ((b, t') : bts) bcset (insert b bset)
+            = (b, t') : aux bcrts bcrtsNext ((b, t') : bts) bcset (insert b bset)
         | (b, c) `notMember` bcset
-            = aux bcrts' ([ (move b c c', c', c : r, t) | c' <- canMove b c ] : bcrtss)
+            = aux bcrts' ([ (move b c c', c', c : r, t) | c' <- canMove b c ] ++ bcrtsNext)
                 bts (insert (b, c) bcset) bset
         | otherwise
-            = aux bcrts' bcrtss bts bcset bset
-        where t' = (c : r) : t
+            = aux bcrts' bcrtsNext bts bcset bset
+        where
+            t' = (c : r) : t
 
 canCatch :: Board -> [Coord]
-canCatch b = [ c | c <- indices b , exists b c ]
+canCatch b = [ c | c <- indices b , isPresent b c ]
 
 canMove :: Board -> Coord -> [Coord]
 canMove b c = [ c' | c' <- indices b , canJoin c c'
-    , isBlank b c' , and [ exists b c'' | c'' <- segment c c' ] ]
+    , isBlank b c' , and [ isPresent b c'' | c'' <- segment c c' ] ]
 
 move :: Board -> Coord -> Coord -> Board
 move b c c' = b // ((c, '.') : (c', b ! c) : [ (c'', invert (b ! c'')) | c'' <- segment c c' ])
 
-exists :: Board -> Coord -> Bool
-exists b c = b ! c == 'o' || b ! c == 'x'
+isPresent :: Board -> Coord -> Bool
+isPresent b c = b ! c == 'o' || b ! c == 'x'
 
 isBlank :: Board -> Coord -> Bool
 isBlank b c = b ! c == '.'
