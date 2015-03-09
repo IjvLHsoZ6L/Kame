@@ -1,13 +1,13 @@
-import Control.Applicative ((<$>))
-import Data.Array.Unboxed (UArray, array, range, bounds, indices, (!), (//))
-import Data.Set (empty, singleton, notMember, insert)
+import Control.Applicative
+import Data.Array.Unboxed
+import qualified Data.Set as S
 
 main :: IO ()
 main = do
     b0 <- toBoard <$> readFile "problem.txt"
     printBoard b0
-    printBoardTrack $ head $ filter (isCompleted . fst) $ transform b0
-    -- mapM_ printIntBoardTrack $ zip [1 .. ] $ transform b0
+    printBoardTrack $ head $ filter (hasNoReverse . fst) $ transforms b0
+    -- mapM_ printIntBoardTrack $ zip [1 .. ] $ transforms b0
 
 type Board = UArray Coord State
 
@@ -15,9 +15,7 @@ type State = Char
 
 type Coord = (Int, Int)
 
-type Route = [Coord]
-
-type Track = [Route]
+type Track = [[Coord]]
 
 toBoard :: String -> Board
 toBoard s = array bds [ ((i, j), lns !! i !! j) | (i, j) <- range bds ] where
@@ -27,84 +25,75 @@ toBoard s = array bds [ ((i, j), lns !! i !! j) | (i, j) <- range bds ] where
     w = length (head lns)
 
 fromBoard :: Board -> String
-fromBoard b = unlines [ [ b ! (i , j) | j <- [jMin .. jMax] ] | i <- [iMin .. iMax] ] where
-        ((iMin, jMin), (iMax, jMax)) = bounds b
+fromBoard b = unlines [ [ b ! (i, j) | j <- [j0 .. j1] ] | i <- [i0 .. i1] ] where
+    ((i0, j0), (i1, j1)) = bounds b
 
 printBoard :: Board -> IO ()
 printBoard = putStrLn . fromBoard
 
 printBoardTrack :: (Board, Track) -> IO ()
-printBoardTrack (b, t) = do
-    mapM_ print $ reverse $ map reverse t
-    printBoard b
+printBoardTrack (b, t) = mapM_ print (reverse $ map reverse t) >> printBoard b
 
 printIntBoardTrack :: (Int, (Board, Track)) -> IO ()
-printIntBoardTrack (i, bt) = do
-    print i
-    printBoardTrack bt
+printIntBoardTrack (i, bt) = print i >> printBoardTrack bt
 
-isCompleted :: Board -> Bool
-isCompleted b = and [ b ! c /= 'x' | c <- indices b ]
+hasNoReverse :: Board -> Bool
+hasNoReverse b = and [ b ! c /= 'x' | c <- indices b ]
 
-transform :: Board -> [(Board, Track)]
-transform b0 = aux [] [] [(b0, [])] empty (singleton b0) where
+transforms :: Board -> [(Board, Track)]
+transforms b0 = aux [] [] [(b0, [])] (S.singleton b0) S.empty where
     aux [] [] [] _ _
         = []
-    aux [] [] bts bcset bset
-        = aux [ (b, p, [], t) | (b, t) <- reverse bts , p <- canCatch b ] [] [] bcset bset
-    aux [] bcrtsNext bts bcset bset
-        = aux (concat $ reverse bcrtsNext) [] bts bcset bset
-    aux bcrts @ ((b, c, r, t) : bcrts') bcrtsNext bts bcset bset
-        | b `notMember` bset
-            = (b, t') : aux bcrts bcrtsNext ((b, t') : bts) bcset (insert b bset)
-        | (b, c) `notMember` bcset
-            = aux bcrts' ([ (move b c c', c', c : r, t) | c' <- canMove b c ] : bcrtsNext)
-                bts (insert (b, c) bcset) bset
+    aux [] [] bts bset bcset
+        = aux [] (map picks bts) [] bset bcset
+    aux [] bcptss bts bset bcset
+        = aux (concat $ reverse bcptss) [] bts bset bcset
+    aux bcpts @ ((b, c, r, t) : bcpts') bcptss bts bset bcset
+        | S.notMember b bset
+            = (b, t') : aux bcpts bcptss ((b, t') : bts) (S.insert b bset) bcset
+        | S.notMember (b, c) bcset
+            = aux bcpts' (moves (b, c, r, t) : bcptss) bts bset (S.insert (b, c) bcset)
         | otherwise
-            = aux bcrts' bcrtsNext bts bcset bset
-        where
-            t' = (c : r) : t
+            = aux bcpts' bcptss bts bset bcset
+        where t' = (c : r) : t
+    picks (b, t) = [ (b, c, [], t) | c <- indices b , b `hasPieceOn` c ]
+    moves (b, c, r, t) = [ (move b c c', c', c : r, t) | c' <- indices b , b `admitsMove` (c, c') ]
 
-canCatch :: Board -> [Coord]
-canCatch b = [ c | c <- indices b , isPresent b c ]
+hasPieceOn :: Board -> Coord -> Bool
+hasPieceOn b c = b ! c /= '.'
 
-canMove :: Board -> Coord -> [Coord]
-canMove b c = [ c' | c' <- indices b , canJoin c c'
-    , isBlank b c' , and [ isPresent b c'' | c'' <- segment c c' ] ]
+admitsMove :: Board -> (Coord, Coord) -> Bool
+admitsMove b (c0, c1)
+    = b `hasPieceOn` c0
+    && not (b `hasPieceOn` c1)
+    && hasSegment (c0, c1)
+    && and [ b `hasPieceOn` c | c <- segment (c0, c1) ]
 
 move :: Board -> Coord -> Coord -> Board
-move b c c' = b // ((c, '.') : (c', b ! c) : [ (c'', invert (b ! c'')) | c'' <- segment c c' ])
-
-isPresent :: Board -> Coord -> Bool
-isPresent b c = b ! c == 'o' || b ! c == 'x'
-
-isBlank :: Board -> Coord -> Bool
-isBlank b c = b ! c == '.'
+move b c0 c1 = b // ((c0, '.') : (c1, b ! c0) : [ (c, invert (b ! c)) | c <- segment (c0, c1) ])
 
 invert :: State -> State
 invert 'o' = 'x'
 invert 'x' = 'o'
 invert _   = error "invert"
 
-canJoin :: Coord -> Coord -> Bool
-canJoin (i, j) (i', j')
-    | abs (i - i') <= 1 && abs (j - j') <= 1
-        = False
-    | otherwise
-        = i == i' || j == j' || abs (i - i') == abs (j - j')
+hasSegment :: (Coord, Coord) -> Bool
+hasSegment ((i0, j0), (i1, j1)) = (di > 1 || dj > 1) && (di == 0 || dj == 0 || di == dj) where
+    di = abs (i1 - i0)
+    dj = abs (j1 - j0)
 
-segment :: Coord -> Coord -> [Coord]
-segment (i, j) (i', j')
-    | i == i'
-        = [ (i, j'') | j'' <- j''s ]
-    | j == j'
-        = [ (i'', j) | i'' <- i''s ]
-    | i - i' == j - j'
-        = zip i''s j''s
-    | i - i' == j' - j
-        = zip i''s (reverse j''s)
+segment :: (Coord, Coord) -> [Coord]
+segment ((i0, j0), (i1, j1))
+    | i0 == i1
+        = zip (repeat i0) js
+    | j0 == j1
+        = zip is (repeat j0)
+    | i1 - i0 == j1 - j0
+        = zip is js
+    | i1 - i0 == j0 - j1
+        = zip is (reverse js)
     | otherwise
         = error "segment"
     where
-        i''s = [min i i' + 1 .. max i i' - 1]
-        j''s = [min j j' + 1 .. max j j' - 1]
+        is = [min i0 i1 + 1 .. max i0 i1 - 1]
+        js = [min j0 j1 + 1 .. max j0 j1 - 1]
