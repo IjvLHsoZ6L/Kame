@@ -1,13 +1,13 @@
 import Control.Applicative
 import Data.Array.Unboxed
 import qualified Data.Set as S
+import qualified System.Environment
 
 main :: IO ()
 main = do
-    b0 <- toBoard <$> readFile "problem.txt"
+    b0 <- fmap toBoard . (=<<) readFile . fmap head $ System.Environment.getArgs
     printBoard b0
-    printBoardTrack $ head $ filter (hasNoReverse . fst) $ transforms b0
-    -- mapM_ printIntBoardTrack $ zip [1 .. ] $ transforms b0
+    printBoardTrack . head . filter (hasNoReverse . fst) . transforms $ b0
 
 type Board = UArray Coord State
 
@@ -25,14 +25,14 @@ toBoard s = array bds [ ((i, j), lns !! i !! j) | (i, j) <- range bds ] where
     w = length (head lns)
 
 fromBoard :: Board -> String
-fromBoard b = unlines [ [ b ! (i, j) | j <- [j0 .. j1] ] | i <- [i0 .. i1] ] where
-    ((i0, j0), (i1, j1)) = bounds b
+fromBoard b = unlines [ [ b ! (i, j) | j <- [jMin .. jMax] ] | i <- [iMin .. iMax] ] where
+    ((iMin, jMin), (iMax, jMax)) = bounds b
 
 printBoard :: Board -> IO ()
 printBoard = putStrLn . fromBoard
 
 printBoardTrack :: (Board, Track) -> IO ()
-printBoardTrack (b, t) = mapM_ print (reverse $ map reverse t) >> printBoard b
+printBoardTrack (b, t) = mapM_ print (reverse . map reverse $ t) >> printBoard b
 
 printIntBoardTrack :: (Int, (Board, Track)) -> IO ()
 printIntBoardTrack (i, bt) = print i >> printBoardTrack bt
@@ -47,7 +47,7 @@ transforms b0 = aux [] [] [(b0, [])] (S.singleton b0) S.empty where
     aux [] [] bts bset bcset
         = aux [] (map picks bts) [] bset bcset
     aux [] bcptss bts bset bcset
-        = aux (concat $ reverse bcptss) [] bts bset bcset
+        = aux (concat . reverse $ bcptss) [] bts bset bcset
     aux bcpts @ ((b, c, r, t) : bcpts') bcptss bts bset bcset
         | S.notMember b bset
             = (b, t') : aux bcpts bcptss ((b, t') : bts) (S.insert b bset) bcset
