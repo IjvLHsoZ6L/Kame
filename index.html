@@ -1,32 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <title>Flip It!</title>
+<style>
+html, body, canvas { display: block; width: 100%; height: 100%; margin: 0; }
+</style>
 </head>
 <body>
-
-<h1>Flip It!</h1>
-
-<p>
-Count:
-<input type="number" id="count" readonly="readonly">
-<input type="button" id="start" value="(Re)start">
-<select id="select">
-  <option>Saved Data</option>
-  <option>No. 1 (shortest: 2)</option>
-  <option>No. 2 (shortest: 2)</option>
-  <option>No. 3 (shortest: 2)</option>
-  <option>No. 4 (shortest: 2)</option>
-  <option>No. 5 (shortest: 2)</option>
-  <option>No. 6 (shortest: 2)</option>
-</select>
-<input type="button" id="config" value="Config">
-</p>
-
-<table><tbody id="tbody"></tbody></table>
-
+<canvas id="canvas"></canvas>
 <script src="script.js"></script>
-
 </body>
 </html>
