@@ -212,7 +212,7 @@
     canvas.width  = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
 
-    scale   = Math.floor(Math.min(canvas.width, canvas.height) / (size + 2));
+    scale   = Math.floor(Math.min(canvas.width / (size + 1), canvas.height / (size + 2)));
     offsetX = Math.floor((canvas.width - size * scale) / 2);
     offsetY = Math.floor((canvas.height - size * scale) / 2);
 
