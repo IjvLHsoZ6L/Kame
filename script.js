@@ -7,18 +7,102 @@
 
   var size = 4;
 
-  var pauseBack  = [0, 1].join();
-  var pauseRetry = [1, 2].join();
-  var pauseMenu  = [2, 3].join();
+  var mode, state;
+
+  var canvas = document.getElementById('canvas');
+  var scale, offsetX, offsetY;
+  var context = canvas.getContext('2d');
 
   var obverse = document.createElement('img');
   obverse.src = 'obverse.png';
   var reverse = document.createElement('img');
   reverse.src = 'reverse.png';
 
-  var mode, state, scale, offsetX, offsetY;
+  var pauseBack  = [0, 1].join();
+  var pauseRetry = [1, 2].join();
+  var pauseMenu  = [2, 3].join();
 
-  var data = [];
+  var data = [
+    [ '....'
+    , '....'
+    , 'xxxx'
+    , '..xx'
+    ],
+    [ '....'
+    , '..xx'
+    , '.xx.'
+    , 'xx..'
+    ],
+    [ '....'
+    , 'x.xx'
+    , 'x.xx'
+    , '.x..'
+    ],
+    [ '....'
+    , '..xx'
+    , 'xx..'
+    , 'xx..'
+    ],
+    [ '....'
+    , '.xxx'
+    , 'xx..'
+    , 'xx..'
+    ],
+    [ '....'
+    , 'xxxx'
+    , 'xx..'
+    , '..xx'
+    ],
+    [ '....'
+    , '.xxx'
+    , 'xx..'
+    , '..xx'
+    ],
+    [ '.xx.'
+    , 'xxxx'
+    , '.xx.'
+    , '.xx.'
+    ],
+    [ '..x.'
+    , '..x.'
+    , 'xxxx'
+    , '..xx'
+    ],
+    [ '..x.'
+    , '.xx.'
+    , 'xxxx'
+    , '..x.'
+    ],
+    [ 'x.x.'
+    , '.xx.'
+    , 'xxxx'
+    , '..x.'
+    ],
+    [ '..x.'
+    , '..xx'
+    , 'xx..'
+    , '.x..'
+    ],
+    [ '..x.'
+    , '.xxx'
+    , 'xxx.'
+    , '.x..'
+    ],
+    [ '.xx.'
+    , 'x.xx'
+    , 'xx.x'
+    , '.xx.'
+    ],
+    [ '...x'
+    , 'xxxx'
+    , 'x.xx'
+    , '.xx.'
+    ],
+    [ '....'
+    , 'xxxx'
+    , 'xxxx'
+    , '.xx.'
+    ]];
 
   function isClear() {
     for (var i = 0; i < size; i++)
@@ -56,7 +140,7 @@
       return false;
     var di = i - state.i > 0 ? + 1 : i - state.i < 0 ? -1 : 0;
     var dj = j - state.j > 0 ? + 1 : j - state.j < 0 ? -1 : 0;
-    var n = Math.max(Math.abs(i - state.i), Math.abs(j - state.j));
+    var n  = Math.max(Math.abs(i - state.i), Math.abs(j - state.j));
     for (var k = 1; k < n; k++)
       if (!exists(state.i + k * di, state.j + k * dj))
         return false;
@@ -208,7 +292,6 @@
 
   function draw() {
 
-    var canvas    = document.getElementById('canvas');
     canvas.width  = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
 
@@ -216,7 +299,6 @@
     offsetX = Math.floor((canvas.width - size * scale) / 2);
     offsetY = Math.floor((canvas.height - size * scale) / 2);
 
-    var context = canvas.getContext('2d');
     context.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     context.font         = '10px Courier, Monospace';
     context.textAlign    = 'center';
@@ -391,86 +473,5 @@
       default: return false;
     }
   }
-
-  data.push([
-      '....',
-      '....',
-      'xxxx',
-      '..xx']);
-  data.push([
-      '....',
-      '..xx',
-      '.xx.',
-      'xx..']);
-  data.push([
-      '....',
-      'x.xx',
-      'x.xx',
-      '.x..']);
-  data.push([
-      '....',
-      '..xx',
-      'xx..',
-      'xx..']);
-  data.push([
-      '....',
-      '.xxx',
-      'xx..',
-      'xx..']);
-  data.push([
-      '....',
-      'xxxx',
-      'xx..',
-      '..xx']);
-  data.push([
-      '....',
-      '.xxx',
-      'xx..',
-      '..xx']);
-  data.push([
-      '.xx.',
-      'xxxx',
-      '.xx.',
-      '.xx.']);
-  data.push([
-      '..x.',
-      '..x.',
-      'xxxx',
-      '..xx']);
-  data.push([
-      '..x.',
-      '.xx.',
-      'xxxx',
-      '..x.']);
-  data.push([
-      'x.x.',
-      '.xx.',
-      'xxxx',
-      '..x.']);
-  data.push([
-      '..x.',
-      '..xx',
-      'xx..',
-      '.x..']);
-  data.push([
-      '..x.',
-      '.xxx',
-      'xxx.',
-      '.x..']);
-  data.push([
-      '.xx.',
-      'x.xx',
-      'xx.x',
-      '.xx.']);
-  data.push([
-      '...x',
-      'xxxx',
-      'x.xx',
-      '.xx.']);
-  data.push([
-      '....',
-      'xxxx',
-      'xxxx',
-      '.xx.']);
 
 })();
