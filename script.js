@@ -176,7 +176,7 @@
     draw();
   }
 
-  function begin(id) {
+  function newGame(id) {
     mode          = 'play';
     state         = {};
     state.id      = id;
@@ -231,7 +231,7 @@
     switch (mode) {
       case 'menu':
         if (inRange)
-          begin(i + j * size);
+          newGame(i + j * size);
         return;
       case 'play':
         if (inRange) {
@@ -253,8 +253,9 @@
               pick(i, j);
           }
         }
-        else
+        else {
           pause();
+        }
         return;
       case 'pause':
         switch ([i, j].join()) {
@@ -262,7 +263,7 @@
             back();
             return;
           case pauseRetry:
-            begin(state.id);
+            newGame(state.id);
             return;
           case pauseMenu:
             menu();
@@ -289,6 +290,8 @@
     var j = Math.floor((t.clientY - offsetY) / scale);
     onclick(i, j);
   });
+
+  addEventListener('resize', draw);
 
   function draw() {
 
